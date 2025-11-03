@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Link } from 'react-router-dom'
 import User from './pages/user/user.jsx'
 import Admin from './pages/admin/admin.jsx'
 import ArtifactManagement from './pages/admin/ArtifactManagement.jsx'
@@ -13,4 +13,5 @@ function App() {
   )
 }
 
-export default App
+export default App;
+
