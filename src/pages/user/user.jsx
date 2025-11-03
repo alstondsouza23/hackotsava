@@ -1,7 +1,8 @@
   
+import LiveOCR from "./liveOCR";
 
 export default function User() {
   return (
-    <h1>Sample User Page</h1>
-  );
+    <LiveOCR/>
+  )
 }
