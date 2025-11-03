@@ -3,6 +3,7 @@ import { Search, Home, BarChart3, Users, Settings, Menu, X } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import LineChart from "../../components/LineChart"; // ✅ import chart component
 import { Radar } from 'react-chartjs-2'; // ✅ Import Radar chart
+import HeatmapComponent from '../../components/HeatmapComponent'; // adjust path as needed
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -385,18 +386,17 @@ export default function Admin() {
             </div>
 
             {/* ✅ Right Div — Activity Section */}
-            <div
-              style={{
-                backgroundColor: 'white',
-                borderRadius: '16px',
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                padding: '24px',
-                border: '1px solid #f3f4f6'
-              }}
-            >
-              
-<p>fvxv</p>
-            </div>
+            <div className="heatmap"
+  style={{
+    backgroundColor: 'white',
+    borderRadius: '16px',
+    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+    padding: '24px',
+    border: '1px solid #f3f4f6'
+  }}
+>
+  <HeatmapComponent />
+</div>
           </div>
 
           {/* ✅ Three Sections: British, Mauryas, Civilization */}
