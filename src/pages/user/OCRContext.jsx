@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from "react";
 
-const OCRContext = createContext<any>(null);
+const OCRContext = createContext(null);
 
 export const OCRProvider = ({ children }) => {
   const [ocrText, setOCRText] = useState("(No text yet)");
@@ -12,4 +12,7 @@ export const OCRProvider = ({ children }) => {
   );
 };
 
-export const useOCR = () => useContext(OCRContext);
+// eslint-disable-next-line react-refresh/only-export-components
+export const useOCR = () => {
+  return useContext(OCRContext);
+};
