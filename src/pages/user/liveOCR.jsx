@@ -5,6 +5,7 @@ import { useOCR } from "./OCRContext"; // keep this if using context
 const LiveOCR = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  // eslint-disable-next-line no-unused-vars
   const [text, setText] = useState("Initializing OCR...");
   const { setOCRText } = useOCR(); // remove if not using context
 
@@ -14,7 +15,9 @@ const LiveOCR = () => {
 
     const startCamera = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } }
+        });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -61,34 +64,31 @@ const LiveOCR = () => {
   }, [setOCRText]);
 
   return (
-    <div className="text-white flex flex-col items-center w-full">
-      <h1>Live OCR with Tesseract.js</h1>
+    <div >
+      
 
-      <video ref={videoRef} autoPlay width={400} height={300}></video>
+    <video ref={videoRef} autoPlay width={400} height={400} style={{marginTop:"0px"}}></video>
 
       <canvas
         ref={canvasRef}
         width={400}
-        height={300}
+        height={400}
         style={{ display:"none" }}
       />
-
-      <div
-        style={{
-          marginTop: "20px",
-          fontSize: "1.2em",
-          background: "#222",
-          padding: "10px",
-          color:"white",
-          borderRadius: "10px",
-          width: "80%",
-          marginLeft: "auto",
-          marginRight: "auto",
-          whiteSpace: "pre-wrap",
-        }}
-      >
+        <div style={{
+        marginTop: "20px",
+        fontSize: "1.2em",
+        background: "#222",
+        color: "white",
+        padding: "10px",
+        borderRadius: "10px",
+        width: "100%",
+        whiteSpace: "pre-wrap",
+        textAlign:"center"
+      }}>
         {text}
       </div>
+     
     </div>
   );
 };
