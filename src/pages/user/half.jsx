@@ -127,6 +127,7 @@ const DropdownWithAudio = ({ title, content }) => {
 export default function Artifact() {
   const { ocrText } = useOCR();
   const [matchedArtifact, setMatchedArtifact] = useState(null);
+  const [sentTitle, setSentTitle] = useState(null);
 
   useEffect(() => {
     if (!ocrText) {
@@ -149,6 +150,13 @@ export default function Artifact() {
       window.speechSynthesis.cancel();
     };
   }, []);
+  const handleSend = () => {
+    if (matchedArtifact && matchedArtifact.title) {
+      setSentTitle(matchedArtifact.title);
+      // You can do more here, like sending this info elsewhere
+      console.log("Sent Title:", matchedArtifact.title);
+    }
+  };
 
   return (
     <div
@@ -160,23 +168,55 @@ export default function Artifact() {
         flexDirection: "column",
       }}
     >
+         {/* Send Button */}
+      <button
+        onClick={handleSend}
+        style={{
+          marginTop: "20px",
+          alignSelf: "flex-start",
+          padding: "10px 20px",
+          backgroundColor: "#007bff",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          cursor: matchedArtifact ? "pointer" : "not-allowed",
+          opacity: matchedArtifact ? 1 : 0.6,
+          fontSize: "16px",
+          marginBottom:"15px",
+          margin:"0 auto"
+        }}
+        disabled={!matchedArtifact}
+      >
+        Send
+      </button>
+
+      {/* Display sent title */}
+      {sentTitle && (
+        <div style={{ marginTop: "10px", color: "#28a745",marginBottom:"10px"}}>
+          Sent Artifact Title: <strong>{sentTitle}</strong>
+        </div>
+      )}
       <DropdownWithAudio 
         title="Artifact Name" 
         content={matchedArtifact?.title || "No artifact detected yet."}
-        style={{display:"flex",justifyContent:"center"}} 
+        style={{margin:"0 auto"}} 
       />
       <DropdownWithAudio 
         title="Short Story Description" 
-        content={matchedArtifact?.shortDescription || "Scan an artifact to see details."} 
+        content={matchedArtifact?.shortDescription || "Scan an artifact to see details."}
+        style={{margin:"0 auto"}} 
       />
       <DropdownWithAudio 
         title="Story Behind the Artifact" 
-        content={matchedArtifact?.story || "Scan an artifact to see its story."} 
+        content={matchedArtifact?.story || "Scan an artifact to see its story."}
+        style={{margin:"0 auto"}}  
       />
       <DropdownWithAudio 
         title="Recommendation" 
-        content={matchedArtifact?.recommendations || "Scan an artifact to see recommendations."} 
+        content={matchedArtifact?.recommendations || "Scan an artifact to see recommendations."}
+        style={{margin:"0 auto"}}  
       />
+      
     </div>
   );
 }
