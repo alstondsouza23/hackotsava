@@ -70,7 +70,7 @@ const LiveOCR = () => {
         ref={canvasRef}
         width={400}
         height={300}
-        style={{  }}
+        style={{ display:"none" }}
       />
 
       <div
@@ -79,6 +79,7 @@ const LiveOCR = () => {
           fontSize: "1.2em",
           background: "#222",
           padding: "10px",
+          color:"white",
           borderRadius: "10px",
           width: "80%",
           marginLeft: "auto",
