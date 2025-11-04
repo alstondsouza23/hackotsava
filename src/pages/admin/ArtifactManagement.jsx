@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Home, BarChart3, Users, Settings, Menu, X, Send } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { fetchBritishArtifacts, fetchMauryaArtifacts, fetchCivilizationArtifacts } from '../../api/fetchArtifacts'
+import { 
+  fetchBritishArtifacts, 
+  fetchMauryaArtifacts, 
+  fetchCivilizationArtifacts,
+  insertBritishArtifact,
+  insertMauryaArtifact,
+  insertCivilizationArtifact
+} from '../../api/fetchArtifacts';
+import ArtifactInputForm from '../../components/ArtifactInputForm';
+import ArtifactAssistant from "./assistantLogic";
 
 export default function ArtifactManagement() {
-   const [britishArtifacts, setBritishArtifacts] = useState([])
-  const [mauryaArtifacts, setMauryaArtifacts] = useState([])
-  const [civilizationArtifacts, setCivilizationArtifacts] = useState([])
-
-  useEffect(() => {
-  async function loadAllArtifacts() {
-    const britishData = await fetchBritishArtifacts()
-    const mauryaData = await fetchMauryaArtifacts()
-    const civilizationData = await fetchCivilizationArtifacts()
-    
-    setBritishArtifacts(britishData)
-    setMauryaArtifacts(mauryaData)
-    setCivilizationArtifacts(civilizationData)
-  }
-  loadAllArtifacts()
-}, [])
+  const [britishArtifacts, setBritishArtifacts] = useState([]);
+  const [mauryaArtifacts, setMauryaArtifacts] = useState([]);
+  const [civilizationArtifacts, setCivilizationArtifacts] = useState([]);
+  const [assistant, setAssistant] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,6 +29,10 @@ export default function ArtifactManagement() {
   ]);
 
   useEffect(() => {
+    loadAllArtifacts();
+  }, []);
+
+  useEffect(() => {
     if (location.pathname === '/admin') {
       setActiveTab('Artifact Management');
     } else if (location.pathname === '/admin/artifacts') {
@@ -38,22 +40,64 @@ export default function ArtifactManagement() {
     }
   }, [location.pathname]);
 
-  // ✅ Chart options
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      title: {
-        display: true,
-        text: "Weekly Active Users"
-      },
-      legend: {
-        position: "top",
-      }
-    },
-    scales: {
-      y: { beginAtZero: true }
+  const loadAllArtifacts = async () => {
+    try {
+      const britishData = await fetchBritishArtifacts();
+      const mauryaData = await fetchMauryaArtifacts();
+      const civilizationData = await fetchCivilizationArtifacts();
+      
+      setBritishArtifacts(britishData || []);
+      setMauryaArtifacts(mauryaData || []);
+      setCivilizationArtifacts(civilizationData || []);
+
+      // Initialize assistant after data is loaded
+      const allArtifacts = [...(britishData || []), ...(mauryaData || []), ...(civilizationData || [])];
+      setAssistant(new ArtifactAssistant(allArtifacts));
+    } catch (error) {
+      console.error('Error loading artifacts:', error);
     }
+  };
+
+  // ✅ Handle British artifact submission
+  const handleBritishSubmit = async (formData) => {
+    setIsLoading(true);
+    const { data, error } = await insertBritishArtifact(formData);
+    
+    if (error) {
+      alert('Error adding British artifact');
+    } else {
+      setBritishArtifacts([...britishArtifacts, data[0]]);
+      alert('British artifact added successfully!');
+    }
+    setIsLoading(false);
+  };
+
+  // ✅ Handle Maurya artifact submission
+  const handleMauryaSubmit = async (formData) => {
+    setIsLoading(true);
+    const { data, error } = await insertMauryaArtifact(formData);
+    
+    if (error) {
+      alert('Error adding Maurya artifact');
+    } else {
+      setMauryaArtifacts([...mauryaArtifacts, data[0]]);
+      alert('Maurya artifact added successfully!');
+    }
+    setIsLoading(false);
+  };
+
+  // ✅ Handle Civilization artifact submission
+  const handleCivilizationSubmit = async (formData) => {
+    setIsLoading(true);
+    const { data, error } = await insertCivilizationArtifact(formData);
+    
+    if (error) {
+      alert('Error adding Civilization artifact');
+    } else {
+      setCivilizationArtifacts([...civilizationArtifacts, data[0]]);
+      alert('Civilization artifact added successfully!');
+    }
+    setIsLoading(false);
   };
 
   const menuItems = [
@@ -63,51 +107,20 @@ export default function ArtifactManagement() {
     { id: 'settings', icon: Settings, label: 'Settings' },
   ];
 
-  // Artifact data for 3 sections with 9 cards each
-  const artifactSections = [
-    {
-      title: 'British',
-      artifacts: Array.from({ length: 9 }, (_, i) => ({
-        id: `british-${i + 1}`,
-        name: `British Artifact ${i + 1}`,
-        period: '1700-1900',
-        description: 'Colonial era artifact'
-      }))
-    },
-    {
-      title: 'Mauryas',
-      artifacts: Array.from({ length: 9 }, (_, i) => ({
-        id: `mauryas-${i + 1}`,
-        name: `Mauryan Artifact ${i + 1}`,
-        period: '322-185 BCE',
-        description: 'Ancient Mauryan dynasty artifact'
-      }))
-    },
-    {
-      title: 'Civilisation',
-      artifacts: Array.from({ length: 9 }, (_, i) => ({
-        id: `civilisation-${i + 1}`,
-        name: `Civilisation Artifact ${i + 1}`,
-        period: 'Various periods',
-        description: 'Historical civilisation artifact'
-      }))
-    }
-  ];
-
-  const handleSendMessage = () => {
-    if (chatInput.trim()) {
+  // ⚡ Enhanced message handler
+  const handleSendMessage = async () => {
+    if (chatInput.trim() && assistant) {
       const newMessages = [...chatMessages, { user: true, text: chatInput }];
       setChatMessages(newMessages);
-      
-      // Simulate bot response
-      setTimeout(() => {
-        setChatMessages([...newMessages, { 
-          user: false, 
-          text: `I received your message: "${chatInput}". How else can I assist you with artifacts?` 
-        }]);
-      }, 1000);
-      
-      setChatInput('');
+      setChatInput("");
+
+      try {
+        const response = await assistant.generateResponse(chatInput);
+        setChatMessages([...newMessages, { user: false, text: response }]);
+      } catch (error) {
+        console.error('Error generating response:', error);
+        setChatMessages([...newMessages, { user: false, text: "Sorry, an error occurred. Please try again." }]);
+      }
     }
   };
 
@@ -194,211 +207,222 @@ export default function ArtifactManagement() {
       </div>
       
       {/* Middle Section - Artifact Cards */}
-      
-<div style={{
-  flex: '1',
-  padding: '24px',
-  overflowY: 'auto',
-  backgroundColor: '#f9fafb'
-}}>
-  <h2 style={{
-    fontSize: '28px',
-    fontWeight: 'bold',
-    marginBottom: '24px',
-    color: '#111827'
-  }}>
-    Artifact Information
-  </h2>
-
-  {/* British Collection */}
-  <h3 style={{
-    fontSize: '22px',
-    fontWeight: '600',
-    marginBottom: '16px',
-    marginTop: '32px',
-    color: '#1f2937',
-    borderBottom: '2px solid #e5e7eb',
-    paddingBottom: '8px'
-  }}>
-    British Collection
-  </h3>
-
-  <div style={{
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: '16px',
-    marginBottom: '32px'
-  }}>
-    {britishArtifacts.map((artifact) => (
-      <div
-        key={artifact.ID}
-        style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          border: '1px solid #e5e7eb',
-          transition: 'all 0.3s',
-          cursor: 'pointer'
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
-      >
-        <h4 style={{
-          fontSize: '18px',
-          fontWeight: '600',
-          marginBottom: '8px',
+      <div style={{
+        flex: '1',
+        padding: '24px',
+        overflowY: 'auto',
+        backgroundColor: '#f9fafb'
+      }}>
+        <h2 style={{
+          fontSize: '28px',
+          fontWeight: 'bold',
+          marginBottom: '24px',
           color: '#111827'
         }}>
-          {artifact['Artifact Name']}
-        </h4>
-        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
-          <strong>Type:</strong> {artifact.Type}
-        </p>
-        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
-          <strong>Period:</strong> {artifact.Period}
-        </p>
-        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
-          <strong>Location:</strong> {artifact.Location}
-        </p>
-      </div>
-    ))}
-  </div>
+          Artifact Information
+        </h2>
 
-  {/* Maurya Collection */}
-  <h3 style={{
-    fontSize: '22px',
-    fontWeight: '600',
-    marginBottom: '16px',
-    marginTop: '32px',
-    color: '#1f2937',
-    borderBottom: '2px solid #e5e7eb',
-    paddingBottom: '8px'
-  }}>
-    Maurya Collection
-  </h3>
-
-  <div style={{
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: '16px',
-    marginBottom: '32px'
-  }}>
-    {mauryaArtifacts.map((artifact) => (
-      <div
-        key={artifact.ID}
-        style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          border: '1px solid #e5e7eb',
-          transition: 'all 0.3s',
-          cursor: 'pointer'
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
-      >console.log("Maurya artifacts data:", mauryaArtifacts);
-
-        <h4 style={{
-          fontSize: '18px',
+        {/* British Collection */}
+        <h3 style={{
+          fontSize: '22px',
           fontWeight: '600',
-          marginBottom: '8px',
-          color: '#111827'
+          marginBottom: '16px',
+          marginTop: '32px',
+          color: '#1f2937',
+          borderBottom: '2px solid #e5e7eb',
+          paddingBottom: '8px'
         }}>
-          {artifact['Artifact Name']}
-        </h4>
-        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
-          <strong>Type:</strong> {artifact.Type}
-        </p>
-        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
-          <strong>Period:</strong> {artifact.Period}
-        </p>
-        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
-          <strong>Location:</strong> {artifact.Location}
-        </p>
-      </div>
-    ))}
-  </div>
+          British Collection
+        </h3>
 
-  {/* Civilization Collection */}
-  <h3 style={{
-    fontSize: '22px',
-    fontWeight: '600',
-    marginBottom: '16px',
-    marginTop: '32px',
-    color: '#1f2937',
-    borderBottom: '2px solid #e5e7eb',
-    paddingBottom: '8px'
-  }}>
-    Civilization Collection
-  </h3>
+        <ArtifactInputForm 
+          collectionName="British"
+          onSubmit={handleBritishSubmit}
+          isLoading={isLoading}
+        />
 
-  <div style={{
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: '16px',
-    marginBottom: '32px'
-  }}>
-    {civilizationArtifacts.map((artifact) => (
-      <div
-        key={artifact.ID}
-        style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          border: '1px solid #e5e7eb',
-          transition: 'all 0.3s',
-          cursor: 'pointer'
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
-      >
-        <h4 style={{
-          fontSize: '18px',
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '16px',
+          marginBottom: '32px'
+        }}>
+          {britishArtifacts.map((artifact) => (
+            <div
+              key={artifact.ID}
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '20px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                border: '1px solid #e5e7eb',
+                transition: 'all 0.3s',
+                cursor: 'pointer'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <h4 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                marginBottom: '8px',
+                color: '#111827'
+              }}>
+                {artifact['Artifact Name']}
+              </h4>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+                <strong>Type:</strong> {artifact.Type}
+              </p>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+                <strong>Period:</strong> {artifact.Period}
+              </p>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+                <strong>Location:</strong> {artifact.Location}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Maurya Collection */}
+        <h3 style={{
+          fontSize: '22px',
           fontWeight: '600',
-          marginBottom: '8px',
-          color: '#111827'
+          marginBottom: '16px',
+          marginTop: '32px',
+          color: '#1f2937',
+          borderBottom: '2px solid #e5e7eb',
+          paddingBottom: '8px'
         }}>
-          {artifact['Artifact Name']}
-        </h4>
-        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
-          <strong>Type:</strong> {artifact.Type}
-        </p>
-        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
-          <strong>Period:</strong> {artifact.Period}
-        </p>
-        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
-          <strong>Location:</strong> {artifact.Location}
-        </p>
+          Maurya Collection
+        </h3>
+
+        <ArtifactInputForm 
+          collectionName="Maurya"
+          onSubmit={handleMauryaSubmit}
+          isLoading={isLoading}
+        />
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '16px',
+          marginBottom: '32px'
+        }}>
+          {mauryaArtifacts.map((artifact) => (
+            <div
+              key={artifact.ID}
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '20px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                border: '1px solid #e5e7eb',
+                transition: 'all 0.3s',
+                cursor: 'pointer'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <h4 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                marginBottom: '8px',
+                color: '#111827'
+              }}>
+                {artifact['Artifact Name']}
+              </h4>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+                <strong>Type:</strong> {artifact.Type}
+              </p>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+                <strong>Period:</strong> {artifact.Period}
+              </p>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+                <strong>Location:</strong> {artifact.Location}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Civilization Collection */}
+        <h3 style={{
+          fontSize: '22px',
+          fontWeight: '600',
+          marginBottom: '16px',
+          marginTop: '32px',
+          color: '#1f2937',
+          borderBottom: '2px solid #e5e7eb',
+          paddingBottom: '8px'
+        }}>
+          Civilization Collection
+        </h3>
+
+        <ArtifactInputForm 
+          collectionName="Civilization"
+          onSubmit={handleCivilizationSubmit}
+          isLoading={isLoading}
+        />
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '16px',
+          marginBottom: '32px'
+        }}>
+          {civilizationArtifacts.map((artifact) => (
+            <div
+              key={artifact.ID}
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '20px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                border: '1px solid #e5e7eb',
+                transition: 'all 0.3s',
+                cursor: 'pointer'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseOut={(e) => {
+                e.currentStyle.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <h4 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                marginBottom: '8px',
+                color: '#111827'
+              }}>
+                {artifact['Artifact Name']}
+              </h4>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+                <strong>Type:</strong> {artifact.Type}
+              </p>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+                <strong>Period:</strong> {artifact.Period}
+              </p>
+              <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+                <strong>Location:</strong> {artifact.Location}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
-    ))}
-  </div>
-</div>
-
-
-
-
-
 
       {/* Right Section - Chatbot */}
       <div style={{
@@ -409,7 +433,6 @@ export default function ArtifactManagement() {
         flexDirection: 'column',
         flexShrink: 0
       }}>
-        {/* Chatbot Header */}
         <div style={{
           padding: '20px',
           borderBottom: '1px solid #e5e7eb',
@@ -424,7 +447,6 @@ export default function ArtifactManagement() {
           </p>
         </div>
 
-        {/* Chat Messages */}
         <div style={{
           flex: 1,
           padding: '16px',
@@ -452,7 +474,6 @@ export default function ArtifactManagement() {
           ))}
         </div>
 
-        {/* Chat Input */}
         <div style={{
           padding: '16px',
           borderTop: '1px solid #e5e7eb',
