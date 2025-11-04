@@ -1,9 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Home, BarChart3, Users, Settings, Menu, X, Send } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import LineChart from "../../components/LineChart"; // ✅ import chart component
+import { fetchBritishArtifacts, fetchMauryaArtifacts, fetchCivilizationArtifacts } from '../../api/fetchArtifacts'
 
 export default function ArtifactManagement() {
+   const [britishArtifacts, setBritishArtifacts] = useState([])
+  const [mauryaArtifacts, setMauryaArtifacts] = useState([])
+  const [civilizationArtifacts, setCivilizationArtifacts] = useState([])
+
+  useEffect(() => {
+  async function loadAllArtifacts() {
+    const britishData = await fetchBritishArtifacts()
+    const mauryaData = await fetchMauryaArtifacts()
+    const civilizationData = await fetchCivilizationArtifacts()
+    
+    setBritishArtifacts(britishData)
+    setMauryaArtifacts(mauryaData)
+    setCivilizationArtifacts(civilizationData)
+  }
+  loadAllArtifacts()
+}, [])
+  
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -175,84 +192,213 @@ export default function ArtifactManagement() {
           })}
         </nav>
       </div>
-
+      
       {/* Middle Section - Artifact Cards */}
-      <div style={{
-        flex: '1',
-        padding: '24px',
-        overflowY: 'auto',
-        backgroundColor: '#f9fafb'
-      }}>
-        <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '24px', color: '#111827' }}>
-          Artifact Information
-        </h2>
+      
+<div style={{
+  flex: '1',
+  padding: '24px',
+  overflowY: 'auto',
+  backgroundColor: '#f9fafb'
+}}>
+  <h2 style={{
+    fontSize: '28px',
+    fontWeight: 'bold',
+    marginBottom: '24px',
+    color: '#111827'
+  }}>
+    Artifact Information
+  </h2>
 
-        {artifactSections.map((section, sectionIndex) => (
-          <div key={sectionIndex} style={{ marginBottom: '40px' }}>
-            <h3 style={{ 
-              fontSize: '22px', 
-              fontWeight: '600', 
-              marginBottom: '16px', 
-              color: '#1f2937',
-              borderBottom: '2px solid #e5e7eb',
-              paddingBottom: '8px'
-            }}>
-              {section.title}
-            </h3>
+  {/* British Collection */}
+  <h3 style={{
+    fontSize: '22px',
+    fontWeight: '600',
+    marginBottom: '16px',
+    marginTop: '32px',
+    color: '#1f2937',
+    borderBottom: '2px solid #e5e7eb',
+    paddingBottom: '8px'
+  }}>
+    British Collection
+  </h3>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: '16px'
-            }}>
-              {section.artifacts.map((artifact) => (
-                <div
-                  key={artifact.id}
-                  style={{
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                    transition: 'all 0.3s',
-                    cursor: 'pointer',
-                    border: '1px solid #e5e7eb'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <h4 style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '600', 
-                    marginBottom: '8px',
-                    color: '#111827'
-                  }}>
-                    {artifact.name}
-                  </h4>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: '#6b7280', 
-                    marginBottom: '4px' 
-                  }}>
-                    <strong>Period:</strong> {artifact.period}
-                  </p>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: '#6b7280' 
-                  }}>
-                    {artifact.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+  <div style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gap: '16px',
+    marginBottom: '32px'
+  }}>
+    {britishArtifacts.map((artifact) => (
+      <div
+        key={artifact.ID}
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          border: '1px solid #e5e7eb',
+          transition: 'all 0.3s',
+          cursor: 'pointer'
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
+        <h4 style={{
+          fontSize: '18px',
+          fontWeight: '600',
+          marginBottom: '8px',
+          color: '#111827'
+        }}>
+          {artifact['Artifact Name']}
+        </h4>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+          <strong>Type:</strong> {artifact.Type}
+        </p>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+          <strong>Period:</strong> {artifact.Period}
+        </p>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+          <strong>Location:</strong> {artifact.Location}
+        </p>
       </div>
+    ))}
+  </div>
+
+  {/* Maurya Collection */}
+  <h3 style={{
+    fontSize: '22px',
+    fontWeight: '600',
+    marginBottom: '16px',
+    marginTop: '32px',
+    color: '#1f2937',
+    borderBottom: '2px solid #e5e7eb',
+    paddingBottom: '8px'
+  }}>
+    Maurya Collection
+  </h3>
+
+  <div style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gap: '16px',
+    marginBottom: '32px'
+  }}>
+    {mauryaArtifacts.map((artifact) => (
+      <div
+        key={artifact.ID}
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          border: '1px solid #e5e7eb',
+          transition: 'all 0.3s',
+          cursor: 'pointer'
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >console.log("Maurya artifacts data:", mauryaArtifacts);
+
+        <h4 style={{
+          fontSize: '18px',
+          fontWeight: '600',
+          marginBottom: '8px',
+          color: '#111827'
+        }}>
+          {artifact['Artifact Name']}
+        </h4>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+          <strong>Type:</strong> {artifact.Type}
+        </p>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+          <strong>Period:</strong> {artifact.Period}
+        </p>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+          <strong>Location:</strong> {artifact.Location}
+        </p>
+      </div>
+    ))}
+  </div>
+
+  {/* Civilization Collection */}
+  <h3 style={{
+    fontSize: '22px',
+    fontWeight: '600',
+    marginBottom: '16px',
+    marginTop: '32px',
+    color: '#1f2937',
+    borderBottom: '2px solid #e5e7eb',
+    paddingBottom: '8px'
+  }}>
+    Civilization Collection
+  </h3>
+
+  <div style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gap: '16px',
+    marginBottom: '32px'
+  }}>
+    {civilizationArtifacts.map((artifact) => (
+      <div
+        key={artifact.ID}
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          border: '1px solid #e5e7eb',
+          transition: 'all 0.3s',
+          cursor: 'pointer'
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
+        <h4 style={{
+          fontSize: '18px',
+          fontWeight: '600',
+          marginBottom: '8px',
+          color: '#111827'
+        }}>
+          {artifact['Artifact Name']}
+        </h4>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+          <strong>Type:</strong> {artifact.Type}
+        </p>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+          <strong>Period:</strong> {artifact.Period}
+        </p>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0' }}>
+          <strong>Location:</strong> {artifact.Location}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
+
+
+
+
+
 
       {/* Right Section - Chatbot */}
       <div style={{
